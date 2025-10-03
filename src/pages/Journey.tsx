@@ -28,14 +28,67 @@ const Journey = () => {
   const [gifts, setGifts] = useState<Gift[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeCity, setActiveCity] = useState<string>('');
+  const [canClaimDaily, setCanClaimDaily] = useState(false);
 
   useEffect(() => {
     const userStr = localStorage.getItem('user');
     if (userStr) {
-      setUser(JSON.parse(userStr));
-      loadGifts(JSON.parse(userStr).id);
+      const userData = JSON.parse(userStr);
+      setUser(userData);
+      loadGifts(userData.id);
+      checkDailyReward(userData.id);
     }
   }, []);
+
+  const checkDailyReward = async (userId: number) => {
+    try {
+      const response = await fetch(`https://functions.poehali.dev/fcce9959-1f1d-4a4f-ad61-3f2c31e54a0d?user_id=${userId}`);
+      const data = await response.json();
+      setCanClaimDaily(data.can_claim || false);
+    } catch (error) {
+      console.error('Failed to check daily reward:', error);
+    }
+  };
+
+  const handleClaimDaily = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      const response = await fetch('https://functions.poehali.dev/fcce9959-1f1d-4a4f-ad61-3f2c31e54a0d', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: user.id }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        const updatedUser = { ...user, balance: data.new_balance };
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        setCanClaimDaily(false);
+        
+        toast({
+          title: 'Ежедневный бонус получен!',
+          description: `+${data.reward_amount}₡ добавлено на баланс`,
+        });
+      } else {
+        toast({
+          title: 'Ошибка',
+          description: data.error || 'Не удалось получить бонус',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: 'Произошла ошибка',
+        variant: 'destructive',
+      });
+    }
+    setLoading(false);
+  };
 
   const loadGifts = async (userId: number) => {
     try {
@@ -174,6 +227,17 @@ const Journey = () => {
                     >
                       <Icon name="Shield" size={20} className="mr-2" />
                       Админ
+                    </Button>
+                  )}
+                  {canClaimDaily && (
+                    <Button
+                      onClick={handleClaimDaily}
+                      disabled={loading}
+                      size="sm"
+                      className="bg-gradient-to-r from-graffiti-electric to-graffiti-blue animate-pulse"
+                    >
+                      <Icon name="Gift" size={20} className="mr-2" />
+                      Бонус +100₡
                     </Button>
                   )}
                   <div className="bg-graffiti-purple/20 px-4 py-2 rounded-lg flex items-center gap-2">

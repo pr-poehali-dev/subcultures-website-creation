@@ -64,6 +64,52 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         elif method == 'POST':
             body_data = json.loads(event.get('body', '{}'))
+            action = body_data.get('action', 'purchase')
+            
+            if action == 'add_gift':
+                admin_username = body_data.get('admin_username')
+                name = body_data.get('name')
+                description = body_data.get('description')
+                price = body_data.get('price')
+                icon = body_data.get('icon', 'Gift')
+                category = body_data.get('category', 'general')
+                
+                if not admin_username:
+                    return {
+                        'statusCode': 403,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'isBase64Encoded': False,
+                        'body': json.dumps({'error': 'Admin access required'})
+                    }
+                
+                cur.execute("SELECT is_admin FROM users WHERE username = %s", (admin_username,))
+                admin_check = cur.fetchone()
+                if not admin_check or not admin_check[0]:
+                    return {
+                        'statusCode': 403,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'isBase64Encoded': False,
+                        'body': json.dumps({'error': 'Access denied'})
+                    }
+                
+                cur.execute(
+                    "INSERT INTO gifts (name, description, price, icon, category) VALUES (%s, %s, %s, %s, %s) RETURNING id",
+                    (name, description, price, icon, category)
+                )
+                gift_id = cur.fetchone()[0]
+                conn.commit()
+                
+                return {
+                    'statusCode': 200,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'isBase64Encoded': False,
+                    'body': json.dumps({
+                        'success': True,
+                        'gift_id': gift_id,
+                        'message': 'Gift added successfully'
+                    })
+                }
+            
             user_id = body_data.get('user_id')
             gift_id = body_data.get('gift_id')
             

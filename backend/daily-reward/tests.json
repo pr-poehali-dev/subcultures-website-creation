@@ -1,0 +1,28 @@
+{
+  "tests": [
+    {
+      "name": "Check daily reward status",
+      "method": "GET",
+      "path": "/?user_id=1",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "can_claim": "boolean",
+        "reward_amount": 100
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Claim daily reward",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "user_id": 1
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

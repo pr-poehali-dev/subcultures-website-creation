@@ -24,6 +24,13 @@ const Admin = () => {
   const [loading, setLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState<string>('');
   const [coinsAmount, setCoinsAmount] = useState<number>(0);
+  const [newGift, setNewGift] = useState({
+    name: '',
+    description: '',
+    price: 0,
+    icon: 'Gift',
+    category: 'general'
+  });
 
   useEffect(() => {
     const userStr = localStorage.getItem('user');
@@ -224,6 +231,59 @@ const Admin = () => {
     setLoading(false);
   };
 
+  const handleAddGift = async () => {
+    if (!newGift.name || !newGift.price) {
+      toast({
+        title: 'Ошибка',
+        description: 'Заполните название и цену',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch('https://functions.poehali.dev/e3cff682-44c4-4ca5-a1dc-cf7aed0b0fce', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'add_gift',
+          admin_username: currentUser.username,
+          ...newGift,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast({
+          title: 'Успешно',
+          description: 'Новый предмет добавлен в магазин',
+        });
+        setNewGift({
+          name: '',
+          description: '',
+          price: 0,
+          icon: 'Gift',
+          category: 'general'
+        });
+      } else {
+        toast({
+          title: 'Ошибка',
+          description: data.error || 'Не удалось добавить предмет',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: 'Произошла ошибка при добавлении предмета',
+        variant: 'destructive',
+      });
+    }
+    setLoading(false);
+  };
+
   if (!currentUser) {
     return null;
   }
@@ -314,6 +374,54 @@ const Admin = () => {
             >
               <Icon name="Coins" size={20} className="mr-2" />
               Добавить
+            </Button>
+          </div>
+        </Card>
+
+        <Card className="bg-black/60 border-graffiti-pink/30 p-6 mb-8">
+          <h2 className="text-2xl font-heading font-bold text-white mb-4">
+            <Icon name="Package" size={32} className="inline-block mr-2 text-graffiti-pink" />
+            Добавить новый предмет в магазин
+          </h2>
+          <div className="grid md:grid-cols-2 gap-4">
+            <Input
+              value={newGift.name}
+              onChange={(e) => setNewGift({ ...newGift, name: e.target.value })}
+              placeholder="Название предмета"
+              className="bg-graffiti-dark text-white border-graffiti-pink/30"
+            />
+            <Input
+              value={newGift.description}
+              onChange={(e) => setNewGift({ ...newGift, description: e.target.value })}
+              placeholder="Описание"
+              className="bg-graffiti-dark text-white border-graffiti-pink/30"
+            />
+            <Input
+              type="number"
+              value={newGift.price}
+              onChange={(e) => setNewGift({ ...newGift, price: Number(e.target.value) })}
+              placeholder="Цена (₡)"
+              className="bg-graffiti-dark text-white border-graffiti-pink/30"
+            />
+            <Input
+              value={newGift.icon}
+              onChange={(e) => setNewGift({ ...newGift, icon: e.target.value })}
+              placeholder="Иконка (Gift, Shirt, Music)"
+              className="bg-graffiti-dark text-white border-graffiti-pink/30"
+            />
+            <Input
+              value={newGift.category}
+              onChange={(e) => setNewGift({ ...newGift, category: e.target.value })}
+              placeholder="Категория"
+              className="bg-graffiti-dark text-white border-graffiti-pink/30"
+            />
+            <Button
+              onClick={handleAddGift}
+              disabled={loading}
+              className="bg-gradient-to-r from-graffiti-pink to-graffiti-purple"
+            >
+              <Icon name="Plus" size={20} className="mr-2" />
+              Добавить предмет
             </Button>
           </div>
         </Card>
