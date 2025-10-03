@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 
-const Index = () => {
-  const navigate = useNavigate();
+const Journey = () => {
   const [activeCity, setActiveCity] = useState<string>('');
 
   const cities = [
@@ -47,18 +46,18 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-graffiti-dark">
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-graffiti-purple/30">
+      <nav className="sticky top-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-md border-b border-graffiti-purple/30">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
-            <div className="text-2xl font-heading font-black bg-gradient-to-r from-graffiti-pink via-graffiti-purple to-graffiti-blue bg-clip-text text-transparent">
+            <Link to="/" className="text-2xl font-heading font-black bg-gradient-to-r from-graffiti-pink via-graffiti-purple to-graffiti-blue bg-clip-text text-transparent">
               СУБКУЛЬТУРА
-            </div>
-            <div className="hidden md:flex items-center gap-6">
+            </Link>
+            <div className="flex items-center gap-4 overflow-x-auto">
               {sections.map((section) => (
                 <button
                   key={section.id}
                   onClick={() => scrollToSection(section.id)}
-                  className="flex items-center gap-2 text-white/80 hover:text-white transition-all hover:scale-110 duration-300"
+                  className="flex items-center gap-2 text-white/80 hover:text-white transition-all hover:scale-110 duration-300 whitespace-nowrap"
                 >
                   <Icon name={section.icon as any} size={20} />
                   <span className="text-sm font-medium">{section.name}</span>
@@ -69,36 +68,7 @@ const Index = () => {
         </div>
       </nav>
 
-      <div className="pt-16">
-        <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-graffiti-purple/20 via-graffiti-blue/20 to-graffiti-pink/20" />
-          <div
-            className="absolute inset-0 opacity-10"
-            style={{
-              backgroundImage: `url(https://v3b.fal.media/files/b/rabbit/7j6uypkMehq11SuG28Ygf_output.png)`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }}
-          />
-          <div className="relative z-10 text-center px-4 animate-fade-in">
-            <h1 className="text-7xl md:text-9xl font-heading font-black mb-6 bg-gradient-to-r from-graffiti-pink via-graffiti-purple to-graffiti-blue bg-clip-text text-transparent drop-shadow-2xl">
-              СУБКУЛЬТУРНАЯ
-              <br />
-              ОБЛАСТЬ
-            </h1>
-            <p className="text-xl md:text-2xl text-white/80 mb-12 max-w-2xl mx-auto">
-              Исследуй города, играй в мини-игры, получай подарки и собирай валюту
-            </p>
-            <Button
-              onClick={() => navigate('/journey')}
-              className="bg-gradient-to-r from-graffiti-pink to-graffiti-purple hover:from-graffiti-purple hover:to-graffiti-blue text-white px-8 py-6 text-lg font-bold rounded-xl transition-all hover:scale-110 shadow-2xl"
-            >
-              <Icon name="Compass" size={24} className="mr-2" />
-              НАЧАТЬ ПУТЕШЕСТВИЕ
-            </Button>
-          </div>
-        </section>
-
+      <div>
         <section id="cities" className="py-20 px-4">
           <div className="container mx-auto">
             <h2 className="text-5xl md:text-6xl font-heading font-black text-center mb-16 bg-gradient-to-r from-graffiti-pink to-graffiti-purple bg-clip-text text-transparent">
@@ -339,4 +309,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default Journey;
