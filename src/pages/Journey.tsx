@@ -185,18 +185,19 @@ const Journey = () => {
               )}
             </div>
           </div>
+        </div>
+        <div className="container mx-auto px-4">
           <div className="flex items-center gap-4 overflow-x-auto pb-2">
-              {sections.map((section) => (
-                <button
-                  key={section.id}
-                  onClick={() => scrollToSection(section.id)}
-                  className="flex items-center gap-2 text-white/80 hover:text-white transition-all hover:scale-110 duration-300 whitespace-nowrap"
-                >
-                  <Icon name={section.icon as any} size={20} />
-                  <span className="text-sm font-medium">{section.name}</span>
-                </button>
-              ))}
-            </div>
+            {sections.map((section) => (
+              <button
+                key={section.id}
+                onClick={() => scrollToSection(section.id)}
+                className="flex items-center gap-2 text-white/80 hover:text-white transition-all hover:scale-110 duration-300 whitespace-nowrap"
+              >
+                <Icon name={section.icon as any} size={20} />
+                <span className="text-sm font-medium">{section.name}</span>
+              </button>
+            ))}
           </div>
         </div>
       </nav>
