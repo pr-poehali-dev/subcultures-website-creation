@@ -165,6 +165,17 @@ const Journey = () => {
             <div className="flex items-center gap-4">
               {user ? (
                 <div className="flex items-center gap-4">
+                  {user.username === 'админ' && (
+                    <Button
+                      onClick={() => navigate('/admin')}
+                      variant="outline"
+                      size="sm"
+                      className="border-graffiti-purple/30 text-graffiti-purple hover:bg-graffiti-purple/10"
+                    >
+                      <Icon name="Shield" size={20} className="mr-2" />
+                      Админ
+                    </Button>
+                  )}
                   <div className="bg-graffiti-purple/20 px-4 py-2 rounded-lg flex items-center gap-2">
                     <Icon name="Coins" size={20} className="text-graffiti-electric" />
                     <span className="text-white font-bold">{user.balance} ₡</span>

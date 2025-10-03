@@ -1,0 +1,30 @@
+{
+  "tests": [
+    {
+      "name": "Get users list as admin",
+      "method": "GET",
+      "path": "/?admin_username=админ",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "users": "array"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Add coins to user",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "action": "add_coins",
+        "admin_username": "админ",
+        "target_username": "testuser",
+        "coins": 100
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

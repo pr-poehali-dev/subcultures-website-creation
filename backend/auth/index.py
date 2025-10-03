@@ -75,7 +75,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         elif action == 'login':
             cur.execute(
-                "SELECT id, username, password, balance FROM users WHERE username = %s",
+                "SELECT id, username, password, balance, is_banned FROM users WHERE username = %s",
                 (username,)
             )
             user = cur.fetchone()
@@ -86,6 +86,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Invalid credentials'})
+                }
+            
+            if user[4]:
+                return {
+                    'statusCode': 403,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'User is banned'})
                 }
             
             return {
