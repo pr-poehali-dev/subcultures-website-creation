@@ -1,0 +1,18 @@
+{
+  "tests": [
+    {
+      "name": "Get all gifts",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "gifts": [
+          {
+            "id": 1
+          }
+        ]
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

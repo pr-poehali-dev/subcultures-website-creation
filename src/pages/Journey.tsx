@@ -1,11 +1,113 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
 
+interface User {
+  id: number;
+  username: string;
+  balance: number;
+}
+
+interface Gift {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  icon: string;
+  category: string;
+  purchased?: boolean;
+}
+
 const Journey = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [user, setUser] = useState<User | null>(null);
+  const [gifts, setGifts] = useState<Gift[]>([]);
+  const [loading, setLoading] = useState(false);
   const [activeCity, setActiveCity] = useState<string>('');
+
+  useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      setUser(JSON.parse(userStr));
+      loadGifts(JSON.parse(userStr).id);
+    }
+  }, []);
+
+  const loadGifts = async (userId: number) => {
+    try {
+      const response = await fetch(`https://functions.poehali.dev/e3cff682-44c4-4ca5-a1dc-cf7aed0b0fce?user_id=${userId}`);
+      const data = await response.json();
+      setGifts(data.gifts || []);
+    } catch (error) {
+      console.error('Failed to load gifts:', error);
+    }
+  };
+
+  const handlePurchase = async (giftId: number, price: number) => {
+    if (!user) {
+      toast({
+        title: 'Требуется вход',
+        description: 'Войдите в аккаунт для покупки подарков',
+        variant: 'destructive',
+      });
+      navigate('/auth');
+      return;
+    }
+
+    if (user.balance < price) {
+      toast({
+        title: 'Недостаточно средств',
+        description: `Нужно ${price} субкоинов, у вас ${user.balance}`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch('https://functions.poehali.dev/e3cff682-44c4-4ca5-a1dc-cf7aed0b0fce', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: user.id, gift_id: giftId }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        const updatedUser = { ...user, balance: data.new_balance };
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        loadGifts(user.id);
+        toast({
+          title: 'Подарок куплен!',
+          description: `Остаток: ${data.new_balance} ₡`,
+        });
+      } else {
+        toast({
+          title: 'Ошибка',
+          description: data.error,
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось купить подарок',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    setUser(null);
+    navigate('/auth');
+  };
 
   const cities = [
     {
@@ -52,7 +154,38 @@ const Journey = () => {
             <Link to="/" className="text-2xl font-heading font-black bg-gradient-to-r from-graffiti-pink via-graffiti-purple to-graffiti-blue bg-clip-text text-transparent">
               СУБКУЛЬТУРА
             </Link>
-            <div className="flex items-center gap-4 overflow-x-auto">
+            <div className="flex items-center gap-4">
+              {user ? (
+                <div className="flex items-center gap-4">
+                  <div className="bg-graffiti-purple/20 px-4 py-2 rounded-lg flex items-center gap-2">
+                    <Icon name="Coins" size={20} className="text-graffiti-electric" />
+                    <span className="text-white font-bold">{user.balance} ₡</span>
+                  </div>
+                  <div className="bg-graffiti-pink/20 px-4 py-2 rounded-lg flex items-center gap-2">
+                    <Icon name="User" size={20} className="text-graffiti-pink" />
+                    <span className="text-white">{user.username}</span>
+                  </div>
+                  <Button
+                    onClick={handleLogout}
+                    variant="ghost"
+                    size="sm"
+                    className="text-white/60 hover:text-white"
+                  >
+                    <Icon name="LogOut" size={20} />
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  onClick={() => navigate('/auth')}
+                  className="bg-gradient-to-r from-graffiti-pink to-graffiti-purple hover:from-graffiti-purple hover:to-graffiti-blue"
+                >
+                  <Icon name="LogIn" size={20} className="mr-2" />
+                  Войти
+                </Button>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-4 overflow-x-auto pb-2">
               {sections.map((section) => (
                 <button
                   key={section.id}
@@ -207,31 +340,55 @@ const Journey = () => {
         </section>
 
         <section id="gifts" className="py-20 px-4 bg-gradient-to-br from-graffiti-pink/10 to-black">
-          <div className="container mx-auto max-w-4xl">
+          <div className="container mx-auto max-w-6xl">
             <h2 className="text-5xl font-heading font-black text-center mb-12 text-graffiti-pink">
               <Icon name="Gift" size={48} className="inline-block mr-4" />
-              ПОДАРКИ
+              МАГАЗИН ПОДАРКОВ
             </h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              {[
-                { name: 'Ежедневный бонус', reward: '100', icon: 'Calendar' },
-                { name: 'Достижение недели', reward: '500', icon: 'Trophy' },
-                { name: 'Реферальная программа', reward: '1000', icon: 'Users' },
-                { name: 'Специальное событие', reward: '2000', icon: 'Sparkles' },
-              ].map((gift) => (
-                <Card
-                  key={gift.name}
-                  className="bg-black/60 border-graffiti-pink/30 p-6 hover:scale-105 transition-all duration-300 cursor-pointer"
+            {!user && (
+              <div className="text-center mb-8">
+                <p className="text-white/60 mb-4">Войдите в аккаунт для покупки подарков</p>
+                <Button
+                  onClick={() => navigate('/auth')}
+                  className="bg-gradient-to-r from-graffiti-pink to-graffiti-purple"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="bg-graffiti-pink/20 p-4 rounded-lg">
-                      <Icon name={gift.icon as any} size={32} className="text-graffiti-pink" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-white mb-1">{gift.name}</h3>
-                      <div className="text-graffiti-pink font-bold">+{gift.reward} монет</div>
-                    </div>
+                  <Icon name="LogIn" size={20} className="mr-2" />
+                  Войти
+                </Button>
+              </div>
+            )}
+            <div className="grid md:grid-cols-3 gap-6">
+              {gifts.map((gift) => (
+                <Card
+                  key={gift.id}
+                  className={`bg-black/60 border-graffiti-pink/30 p-6 transition-all duration-300 ${
+                    gift.purchased ? 'opacity-50' : 'hover:scale-105 cursor-pointer'
+                  }`}
+                >
+                  <div className="text-center mb-4">
+                    <Icon
+                      name={gift.icon as any}
+                      size={64}
+                      className={`mx-auto mb-4 ${gift.purchased ? 'text-white/40' : 'text-graffiti-pink'}`}
+                    />
+                    <h3 className="text-xl font-bold text-white mb-2">{gift.name}</h3>
+                    <p className="text-white/60 text-sm mb-4">{gift.description}</p>
+                    <div className="text-3xl font-black text-graffiti-pink mb-4">₡{gift.price}</div>
                   </div>
+                  {gift.purchased ? (
+                    <div className="bg-graffiti-purple/20 text-white py-3 px-6 rounded-lg text-center font-bold">
+                      <Icon name="Check" size={20} className="inline-block mr-2" />
+                      Куплено
+                    </div>
+                  ) : (
+                    <Button
+                      onClick={() => handlePurchase(gift.id, gift.price)}
+                      disabled={loading || !user}
+                      className="w-full bg-gradient-to-r from-graffiti-pink to-graffiti-purple hover:from-graffiti-purple hover:to-graffiti-blue"
+                    >
+                      {loading ? 'Покупка...' : 'Купить'}
+                    </Button>
+                  )}
                 </Card>
               ))}
             </div>
