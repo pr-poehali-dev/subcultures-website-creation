@@ -1,6 +1,6 @@
 import json
 import os
-import hashlib
+import bcrypt
 import psycopg2
 from typing import Dict, Any
 
@@ -45,13 +45,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'Username and password required'})
         }
     
-    password_hash = hashlib.sha256(password.encode()).hexdigest()
-    
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
     cur = conn.cursor()
     
     try:
         if action == 'register':
+            password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            
             cur.execute(
                 "INSERT INTO users (username, password, balance) VALUES (%s, %s, 1000) RETURNING id, username, balance",
                 (username, password_hash)
@@ -75,12 +75,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         elif action == 'login':
             cur.execute(
-                "SELECT id, username, balance FROM users WHERE username = %s AND password = %s",
-                (username, password_hash)
+                "SELECT id, username, password, balance FROM users WHERE username = %s",
+                (username,)
             )
             user = cur.fetchone()
             
-            if not user:
+            if not user or not bcrypt.checkpw(password.encode('utf-8'), user[2].encode('utf-8')):
                 return {
                     'statusCode': 401,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
@@ -97,7 +97,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'user': {
                         'id': user[0],
                         'username': user[1],
-                        'balance': user[2]
+                        'balance': user[3]
                     }
                 })
             }
